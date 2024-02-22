@@ -42,7 +42,7 @@ module mkVectorDot (VD);
                             address: zeroExtend(pos_a),
                             datain: ?});
 
-        if (pos_a < dim*zeroExtend(i))
+        if (pos_a < dim * (zeroExtend(i) + 1)) // Missing addition of 1 to the index
             pos_a <= pos_a + 1;
         else done_a <= True;
 
@@ -56,22 +56,26 @@ module mkVectorDot (VD);
                 address: zeroExtend(pos_b),
                 datain: ?});
 
-        if (pos_b < dim*zeroExtend(i))
+        if (pos_b < dim * (zeroExtend(i) + 1)) // Missing addition of 1 to the index
             pos_b <= pos_b + 1;
         else done_b <= True;
-    
+
         req_b_ready <= True;
     endrule
 
-    rule mult_inputs (req_a_ready && req_b_ready && !done_all);
+    rule mult_inputs (ready_start && req_a_ready && req_b_ready && !done_all); // Add ready_start condition to resolve conflict between start and mult_inputs
         let out_a <- a.portA.response.get();
         let out_b <- b.portA.response.get();
+        // Debugging output (not required anymore after all the tests pass)
+        //$display("a: %d, b: %d, result: %d", out_a, out_b, output_res);
+        //$display("done_all: %d, done_a: %d, done_b: %d", done_all, done_a, done_b);
 
-        output_res <=  out_a*out_b;     
+        output_res <= output_res + out_a * out_b; // Result was missing the addition
         pos_out <= pos_out + 1;
-        
-        if (pos_out == dim-1) begin
+
+        if (pos_out == dim - 1) begin
             done_all <= True;
+            ready_start <= False; // Stop getting values for a and b from BRAM
         end
 
 
@@ -84,13 +88,14 @@ module mkVectorDot (VD);
     method Action start(Bit#(8) dim_in, Bit#(2) i_in) if (!ready_start);
         ready_start <= True;
         dim <= dim_in;
-        done_all <= False;
-        pos_a <= dim_in*zeroExtend(i);
-        pos_b <= dim_in*zeroExtend(i);
+        i <= i_in;
         done_a <= False;
         done_b <= False;
+        done_all <= False;
+        pos_a <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation
+        pos_b <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation
         pos_out <= 0;
-        i <= i_in;
+        output_res <= 0; // Initialize the result
     endmethod
 
     method ActionValue#(Bit#(32)) response() if (done_all);
