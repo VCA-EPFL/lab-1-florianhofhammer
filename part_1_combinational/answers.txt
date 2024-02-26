@@ -2,12 +2,33 @@
 
 3.  Shifters
 
->>
+I am not sure I have understood properly what is meant with a "selector" and
+how to determine the number and size of a required selector due to an absolute
+lack of background in such low-level digital circuit design, so please take the
+below answers with a grain of salt.
 
->>
+>> `naiveShfl` uses 16 256-to-16 muxes if `shftAmnt` is dynamic. This is due to
+   the dynamic indexing into the `in` vector inside of the for loop. When the
+   loop is unrolled into its 16 iterations, we need 16 selectors. Each of the
+   selectors selects a word (here defined as 16 bit, therefore a `to-16` mux)
+   of the input vector, which holds 16 words (therefore 16*16 bit = 256 bit
+   input to the mux). If we talk about the selectors in terms of word size
+   instead of number of bits, the total number of selectors doesn't change but
+   we'd have 16-to-1 selectors instead (selecting one word out of 16).
 
->>
+>> If `shftAmnt` is constant, `naiveShfl` does not use any selectors at all.
+   The unrolled for loop would just result in a fixed rewiring of words from
+   one position in the vector to another without the requirement of selecting
+   a word dynamically.
+
+>> Assuming that we have implementations of `naiveShfl` with fixed shift
+   amounts 1, 2, 4, 8 (that do not require any selectors at all as explained in
+   the answer to the second question), my barrel shifter implementation
+   requires 4 4-to-1 selectors. In the for loops' body, I select a bit from the
+   4-bit `shftAmnt` input 4 times. This bit determines whether the input is
+   shifted by the corresponding power of 2 or not.
 
 ---
 
-Time spent on Part 1: _____
+Time spent on Part 1: 1.5h
+Time spent on Part 2: 1h

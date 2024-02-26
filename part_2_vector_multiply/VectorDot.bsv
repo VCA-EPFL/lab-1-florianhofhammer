@@ -1,7 +1,7 @@
 import Vector::*;
 import BRAM::*;
 
-// Time spent on VectorDot: ____
+// Time spent on VectorDot: 1h
 
 // Please annotate the bugs you find.
 
@@ -63,7 +63,7 @@ module mkVectorDot (VD);
         req_b_ready <= True;
     endrule
 
-    rule mult_inputs (ready_start && req_a_ready && req_b_ready && !done_all); // Add ready_start condition to resolve conflict between start and mult_inputs
+    rule mult_inputs (ready_start && req_a_ready && req_b_ready && !done_all); // Add ready_start condition to resolve conflict between start and mult_inputs (also compiles and works without but this removes a warning)
         let out_a <- a.portA.response.get();
         let out_b <- b.portA.response.get();
         // Debugging output (not required anymore after all the tests pass)
@@ -92,8 +92,8 @@ module mkVectorDot (VD);
         done_a <= False;
         done_b <= False;
         done_all <= False;
-        pos_a <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation
-        pos_b <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation
+        pos_a <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation (i is only available in the next clock cycle)
+        pos_b <= dim_in * zeroExtend(i_in); // Need to use i_in for the position calculation (i is only available in the next clock cycle)
         pos_out <= 0;
         output_res <= 0; // Initialize the result
     endmethod
@@ -103,5 +103,3 @@ module mkVectorDot (VD);
     endmethod
 
 endmodule
-
-
